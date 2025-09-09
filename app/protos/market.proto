@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+// Message definitions
+message Market {
+  string id = 1;
+  string address = 2;
+  string detail = 3;
+}
+
+message MarketId {
+  string id = 1;
+}
+
+message MarketList {
+  repeated Market markets = 1;
+}
+
+message Empty {}
+
+// Service definition
+service MarketService {
+  rpc GetAllMarket(Empty) returns (MarketList);
+  rpc CreateMarket(Market) returns (Market);
+  rpc GetMarket(MarketId) returns (Market);
+  rpc UpdateMarket(Market) returns (Market);
+  rpc DeleteMarket(MarketId) returns (Empty);
+}

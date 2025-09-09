@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  eieimarketplace-market-management:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "50051:50051"
+      - "7002:7002"
+    volumes:
+      - ./app:/app
