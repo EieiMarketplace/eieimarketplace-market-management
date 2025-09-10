@@ -1,78 +1,140 @@
+# app/routes/market.py
 from fastapi import APIRouter, HTTPException
 from typing import List
 import grpc
-import asyncio
 
-from models.market import Market, MarketId
+from models.market import Market  # <- Pydantic models from previous step
 import grpc_generated.market_pb2 as market_pb2
 import grpc_generated.market_pb2_grpc as market_pb2_grpc
 
 router = APIRouter()
+GRPC_SERVER = "localhost:50051"
 
-GRPC_SERVER = "localhost:50051"  # gRPC server address
+# -------- Marshaling helpers (Pydantic <-> gRPC) --------
 
-async def get_grpc_channel():
-    channel = grpc.aio.insecure_channel(GRPC_SERVER)
-    try:
-        yield channel
-    finally:
-        await channel.close()
+def to_proto_market(m: Market) -> market_pb2.Market:
+    return market_pb2.Market(
+        id=(m.id or ""),
+        market_name=(m.market_name or ""),
+        address=(m.address or ""),
+        cover_image_key=(m.cover_image_key or ""),
+        market_plan_keys=[
+            market_pb2.MarketPlan(market_plan_key=mp.market_plan_key)
+            for mp in (m.market_plan_keys or [])
+        ],
+        logs=[
+            market_pb2.Log(
+                size=lg.size,
+                price=lg.price,
+                user_id=lg.user_id,
+                reservation_id=lg.reservation_id,
+            )
+            for lg in (m.logs or [])
+        ],
+        detail=(m.detail or ""),
+        rule=(m.rule or ""),
+        user_id=(m.user_id or ""),
+    )
+
+
+def from_proto_market(pm: market_pb2.Market) -> Market:
+    return Market(
+        id=pm.id,
+        market_name=pm.market_name,
+        address=pm.address,
+        cover_image_key=pm.cover_image_key,
+        market_plan_keys=[{"marketPlanKey": mp.market_plan_key} for mp in pm.market_plan_keys],
+        logs=[
+            {
+                "size": lg.size,
+                "price": lg.price,
+                "userID": lg.user_id,
+                "reservationID": lg.reservation_id,
+            }
+            for lg in pm.logs
+        ],
+        detail=pm.detail,
+        rule=pm.rule,
+        user_id=pm.user_id,
+    )
+
+
+def grpc_not_found_to_404(e: grpc.aio.AioRpcError):
+    if e.code() == grpc.StatusCode.NOT_FOUND:
+        raise HTTPException(status_code=404, detail="Market not found")
+    raise e
+
+
+# -------- Routes --------
 
 # Create
-@router.post("/", response_model=MarketId)
+@router.post(
+    "/",
+    response_model=Market,
+    response_model_by_alias=True,  # ensures camelCase in JSON
+)
 async def create_market(market: Market):
     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
         stub = market_pb2_grpc.MarketServiceStub(channel)
-        response = await stub.CreateMarket(
-            market_pb2.Market(address=market.address, detail=market.detail or "")
-        )
-        return MarketId(id=response.id, address=response.address, detail=response.detail)
+        # Server may generate id if empty
+        req = to_proto_market(market)
+        try:
+            resp = await stub.CreateMarket(req)
+        except grpc.aio.AioRpcError as e:
+            raise grpc_not_found_to_404(e)
+        return from_proto_market(resp)
 
 # List all
-@router.get("/", response_model=List[MarketId])
+@router.get(
+    "/",
+    response_model=List[Market],
+    response_model_by_alias=True,
+)
 async def list_markets():
     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
         stub = market_pb2_grpc.MarketServiceStub(channel)
-        response = await stub.GetAllMarket(market_pb2.Empty())
-        return [MarketId(id=i.id, address=i.address, detail=i.detail) for i in response.markets]
+        resp = await stub.GetAllMarket(market_pb2.Empty())
+        return [from_proto_market(m) for m in resp.markets]
 
 # Get one
-@router.get("/{market_id}", response_model=MarketId)
+@router.get(
+    "/{market_id}",
+    response_model=Market,
+    response_model_by_alias=True,
+)
 async def get_market(market_id: str):
     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
         stub = market_pb2_grpc.MarketServiceStub(channel)
         try:
-            response = await stub.GetMarket(market_pb2.MarketId(id=market_id))
-            return MarketId(id=response.id, address=response.address, detail=response.detail)
+            resp = await stub.GetMarket(market_pb2.MarketId(id=market_id))
+            return from_proto_market(resp)
         except grpc.aio.AioRpcError as e:
-            if e.code() == grpc.StatusCode.NOT_FOUND:
-                raise HTTPException(status_code=404, detail="Market not found")
-            raise
+            raise grpc_not_found_to_404(e)
 
-# Update
-@router.put("/{market_id}", response_model=MarketId)
+# Update (full replace semantics)
+@router.put(
+    "/{market_id}",
+    response_model=Market,
+    response_model_by_alias=True,
+)
 async def update_market(market_id: str, market: Market):
     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
         stub = market_pb2_grpc.MarketServiceStub(channel)
+        # enforce path id
+        m = market.model_copy(update={"id": market_id})
         try:
-            response = await stub.UpdateMarket(
-                market_pb2.Market(id=market_id, address=market.address or "", detail=market.detail or "")
-            )
-            return Market(id=response.id, address=response.address, detail=response.detail)
+            resp = await stub.UpdateMarket(to_proto_market(m))
+            return from_proto_market(resp)
         except grpc.aio.AioRpcError as e:
-            if e.code() == grpc.StatusCode.NOT_FOUND:
-                raise HTTPException(status_code=404, detail="Item not found")
-            raise
+            raise grpc_not_found_to_404(e)
 
 # Delete
 @router.delete("/{market_id}")
-async def delete_item(market_id: str):
+async def delete_market(market_id: str):
     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
         stub = market_pb2_grpc.MarketServiceStub(channel)
         try:
             await stub.DeleteMarket(market_pb2.MarketId(id=market_id))
             return {"detail": "Deleted successfully"}
         except grpc.aio.AioRpcError as e:
-            if e.code() == grpc.StatusCode.NOT_FOUND:
-                raise HTTPException(status_code=404, detail="Item not found")
-            raise
+            raise grpc_not_found_to_404(e)
