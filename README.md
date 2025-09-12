@@ -2,6 +2,8 @@
 
 ## Features
 - Market (address, detail)
+- Market Plan (Map image)
+- Log (action, timestamp)
 - CRUD (GET/ADD/UPDATE/DELETE)
 
 ## Run with Docker
@@ -13,3 +15,4 @@ docker-compose up --build
 ```
 7002
 ```
+
