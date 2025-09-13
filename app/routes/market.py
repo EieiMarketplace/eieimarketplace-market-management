@@ -96,6 +96,48 @@ async def list_markets():
         resp = await stub.GetAllMarket(market_pb2.Empty())
         return [from_proto_market(m) for m in resp.markets]
 
+# Get markets by user ID
+@router.get(
+    "/user/{user_id}",
+    response_model=List[Market],
+    response_model_by_alias=True,
+)
+async def get_markets_by_user_id(user_id: str):
+    async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
+        stub = market_pb2_grpc.MarketServiceStub(channel)
+        resp = await stub.GetMarketByUserID(market_pb2.UserId(user_id=user_id))
+        return [from_proto_market(m) for m in resp.markets]
+
+# Search markets
+@router.get(
+    "/search",
+    response_model=List[Market],
+    response_model_by_alias=True,
+)
+async def search_markets(
+    query: str = None,
+    market_name: str = None,
+    address: str = None,
+    detail: str = None,
+    user_id: str = None,
+    limit: int = 50,
+    offset: int = 0
+):
+    async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
+        stub = market_pb2_grpc.MarketServiceStub(channel)
+        resp = await stub.SearchMarkets(
+            market_pb2.SearchMarketsRequest(
+                query=query or "",
+                market_name=market_name or "",
+                address=address or "",
+                detail=detail or "",
+                user_id=user_id or "",
+                limit=limit,
+                offset=offset
+            )
+        )
+        return [from_proto_market(m) for m in resp.markets]
+
 # Get one
 @router.get(
     "/{market_id}",

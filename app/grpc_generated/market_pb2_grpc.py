@@ -51,6 +51,16 @@ class MarketServiceStub(object):
                 request_serializer=market__pb2.MarketId.SerializeToString,
                 response_deserializer=market__pb2.Market.FromString,
                 _registered_method=True)
+        self.GetMarketByUserID = channel.unary_unary(
+                '/market.MarketService/GetMarketByUserID',
+                request_serializer=market__pb2.UserId.SerializeToString,
+                response_deserializer=market__pb2.MarketList.FromString,
+                _registered_method=True)
+        self.SearchMarkets = channel.unary_unary(
+                '/market.MarketService/SearchMarkets',
+                request_serializer=market__pb2.SearchMarketsRequest.SerializeToString,
+                response_deserializer=market__pb2.SearchMarketsResponse.FromString,
+                _registered_method=True)
         self.UpdateMarket = channel.unary_unary(
                 '/market.MarketService/UpdateMarket',
                 request_serializer=market__pb2.Market.SerializeToString,
@@ -86,6 +96,18 @@ class MarketServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetMarketByUserID(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SearchMarkets(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def UpdateMarket(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -115,6 +137,16 @@ def add_MarketServiceServicer_to_server(servicer, server):
                     servicer.GetMarket,
                     request_deserializer=market__pb2.MarketId.FromString,
                     response_serializer=market__pb2.Market.SerializeToString,
+            ),
+            'GetMarketByUserID': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMarketByUserID,
+                    request_deserializer=market__pb2.UserId.FromString,
+                    response_serializer=market__pb2.MarketList.SerializeToString,
+            ),
+            'SearchMarkets': grpc.unary_unary_rpc_method_handler(
+                    servicer.SearchMarkets,
+                    request_deserializer=market__pb2.SearchMarketsRequest.FromString,
+                    response_serializer=market__pb2.SearchMarketsResponse.SerializeToString,
             ),
             'UpdateMarket': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateMarket,
@@ -210,6 +242,60 @@ class MarketService(object):
             '/market.MarketService/GetMarket',
             market__pb2.MarketId.SerializeToString,
             market__pb2.Market.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetMarketByUserID(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.MarketService/GetMarketByUserID',
+            market__pb2.UserId.SerializeToString,
+            market__pb2.MarketList.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SearchMarkets(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.MarketService/SearchMarkets',
+            market__pb2.SearchMarketsRequest.SerializeToString,
+            market__pb2.SearchMarketsResponse.FromString,
             options,
             channel_credentials,
             insecure,

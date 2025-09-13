@@ -208,6 +208,105 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
             )
         return market_pb2.MarketList(markets=markets)
 
+    # ---------- Get by User ID ----------
+    async def GetMarketByUserID(self, request, context):
+        markets = []
+        async for doc in self.db["markets"].find({"user_id": request.user_id}):
+            markets.append(
+                market_pb2.Market(
+                    id=str(doc.get("_id", "")),
+                    market_name=doc.get("market_name", ""),
+                    address=doc.get("address", ""),
+                    cover_image_key=doc.get("cover_image_key", ""),
+                    market_plan_keys=[
+                        market_pb2.MarketPlan(market_plan_key=mp.get("market_plan_key", ""))
+                        for mp in (doc.get("market_plan_keys") or [])
+                    ],
+                    logs=[
+                        market_pb2.Log(
+                            size=lg.get("size", ""),
+                            price=float(lg.get("price", 0.0)),
+                            user_id=int(lg.get("user_id", 0)),
+                            reservation_id=int(lg.get("reservation_id", 0)),
+                        )
+                        for lg in (doc.get("logs") or [])
+                    ],
+                    detail=doc.get("detail", ""),
+                    rule=doc.get("rule", ""),
+                    user_id=doc.get("user_id", ""),
+                )
+            )
+        return market_pb2.MarketList(markets=markets)
+
+    # ---------- Search Markets ----------
+    async def SearchMarkets(self, request, context):
+        # Build MongoDB query
+        query = {}
+        
+        # General search query (searches across multiple fields)
+        if request.query:
+            query["$or"] = [
+                {"market_name": {"$regex": request.query, "$options": "i"}},
+                {"address": {"$regex": request.query, "$options": "i"}},
+                {"detail": {"$regex": request.query, "$options": "i"}},
+                {"rule": {"$regex": request.query, "$options": "i"}}
+            ]
+        
+        # Specific field searches
+        if request.market_name:
+            query["market_name"] = {"$regex": request.market_name, "$options": "i"}
+        
+        if request.address:
+            query["address"] = {"$regex": request.address, "$options": "i"}
+        
+        if request.detail:
+            query["detail"] = {"$regex": request.detail, "$options": "i"}
+        
+        if request.user_id:
+            query["user_id"] = request.user_id
+        
+        # Set pagination defaults
+        limit = request.limit if request.limit > 0 else 50
+        offset = request.offset if request.offset >= 0 else 0
+        
+        # Get total count for pagination
+        total_count = await self.db["markets"].count_documents(query)
+        
+        # Execute search with pagination
+        markets = []
+        async for doc in self.db["markets"].find(query).skip(offset).limit(limit):
+            markets.append(
+                market_pb2.Market(
+                    id=str(doc.get("_id", "")),
+                    market_name=doc.get("market_name", ""),
+                    address=doc.get("address", ""),
+                    cover_image_key=doc.get("cover_image_key", ""),
+                    market_plan_keys=[
+                        market_pb2.MarketPlan(market_plan_key=mp.get("market_plan_key", ""))
+                        for mp in (doc.get("market_plan_keys") or [])
+                    ],
+                    logs=[
+                        market_pb2.Log(
+                            size=lg.get("size", ""),
+                            price=float(lg.get("price", 0.0)),
+                            user_id=int(lg.get("user_id", 0)),
+                            reservation_id=int(lg.get("reservation_id", 0)),
+                        )
+                        for lg in (doc.get("logs") or [])
+                    ],
+                    detail=doc.get("detail", ""),
+                    rule=doc.get("rule", ""),
+                    user_id=doc.get("user_id", ""),
+                )
+            )
+        
+        return market_pb2.SearchMarketsResponse(
+            markets=markets,
+            total_count=total_count,
+            limit=limit,
+            offset=offset
+        )
+
     # ---------- Update (full replace via $set) ----------
     async def UpdateMarket(self, request, context):
         try:

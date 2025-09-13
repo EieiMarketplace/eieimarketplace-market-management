@@ -38,12 +38,35 @@ message MarketList {
 
 message Empty {}
 
+message UserId {
+  string user_id = 1;
+}
+
+message SearchMarketsRequest {
+  string query = 1;           // general search query
+  string market_name = 2;     // search by market name
+  string address = 3;         // search by address
+  string detail = 4;          // search by detail
+  string user_id = 5;         // filter by user_id
+  int32 limit = 6;            // limit results (default: 50)
+  int32 offset = 7;           // offset for pagination (default: 0)
+}
+
+message SearchMarketsResponse {
+  repeated Market markets = 1;
+  int32 total_count = 2;      // total number of results
+  int32 limit = 3;            // applied limit
+  int32 offset = 4;           // applied offset
+}
+
 // ----- Service definition -----
 // Keeping the same CRUD interface you already have.
 service MarketService {
   rpc GetAllMarket(Empty) returns (MarketList);
   rpc CreateMarket(Market) returns (Market);
   rpc GetMarket(MarketId) returns (Market);
+  rpc GetMarketByUserID(UserId) returns (MarketList);
+  rpc SearchMarkets(SearchMarketsRequest) returns (SearchMarketsResponse);
   rpc UpdateMarket(Market) returns (Market);
   rpc DeleteMarket(MarketId) returns (Empty);
 }
