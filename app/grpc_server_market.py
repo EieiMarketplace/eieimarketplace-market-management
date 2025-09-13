@@ -262,17 +262,16 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
         if request.detail:
             or_conditions.append({"detail": {"$regex": request.detail, "$options": "i"}})
         
-        # Build final query
+        # Build final query - fix recursion issue
         query = {}
+        
+        # Add OR conditions
         if or_conditions:
             query["$or"] = or_conditions
         
-        # user_id filter (always use AND with other conditions)
+        # Add user_id filter
         if request.user_id:
-            if query:
-                query["$and"] = [query, {"user_id": request.user_id}]
-            else:
-                query["user_id"] = request.user_id
+            query["user_id"] = request.user_id
         
         # Set pagination defaults
         limit = request.limit if request.limit > 0 else 50
