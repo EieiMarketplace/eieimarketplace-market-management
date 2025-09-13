@@ -240,30 +240,39 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
 
     # ---------- Search Markets ----------
     async def SearchMarkets(self, request, context):
-        # Build MongoDB query
-        query = {}
+        # Build MongoDB query with OR logic
+        or_conditions = []
         
         # General search query (searches across multiple fields)
         if request.query:
-            query["$or"] = [
+            or_conditions.extend([
                 {"market_name": {"$regex": request.query, "$options": "i"}},
                 {"address": {"$regex": request.query, "$options": "i"}},
                 {"detail": {"$regex": request.query, "$options": "i"}},
                 {"rule": {"$regex": request.query, "$options": "i"}}
-            ]
+            ])
         
-        # Specific field searches
+        # Specific field searches (also use OR logic)
         if request.market_name:
-            query["market_name"] = {"$regex": request.market_name, "$options": "i"}
+            or_conditions.append({"market_name": {"$regex": request.market_name, "$options": "i"}})
         
         if request.address:
-            query["address"] = {"$regex": request.address, "$options": "i"}
+            or_conditions.append({"address": {"$regex": request.address, "$options": "i"}})
         
         if request.detail:
-            query["detail"] = {"$regex": request.detail, "$options": "i"}
+            or_conditions.append({"detail": {"$regex": request.detail, "$options": "i"}})
         
+        # Build final query
+        query = {}
+        if or_conditions:
+            query["$or"] = or_conditions
+        
+        # user_id filter (always use AND with other conditions)
         if request.user_id:
-            query["user_id"] = request.user_id
+            if query:
+                query["$and"] = [query, {"user_id": request.user_id}]
+            else:
+                query["user_id"] = request.user_id
         
         # Set pagination defaults
         limit = request.limit if request.limit > 0 else 50
