@@ -1,3 +1,5 @@
+from aiohttp import ClientError
+from fastapi import HTTPException
 import boto3
 from core.config import settings
 from botocore.exceptions import NoCredentialsError
@@ -43,3 +45,40 @@ def get_presigned_url(filename: str, expires_in: int = 3600) -> str:
         return url
     except Exception as e:
         raise RuntimeError(f"Failed to generate presigned URL: {e}")
+    
+def delete_with_image_key(imageKey:str):
+    """
+        Delete Image from S3 with Image Key
+    """
+    try:
+        s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=imageKey)
+        return {"message": f"Image '{imageKey}' deleted successfully from S3 bucket '{S3_BUCKET_NAME}'."}
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'NoSuchKey':
+            raise HTTPException(status_code=404, detail=f"Image '{imageKey}' not found in S3 bucket '{S3_BUCKET_NAME}'.")
+        else:
+            raise HTTPException(status_code=500, detail=f"Error deleting image from S3: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
+
+def validate_images_exist(key: list[str]):
+    """
+    ตรวจสอบว่า image_keys มีอยู่ใน S3
+    """
+    try:
+        s3_client.head_object(Bucket=S3_BUCKET_NAME, Key=key)  
+        return True   
+    except ClientError as e:
+        if e.response['Error']['Code'] == '404' or e.response['Error']['Code'] == 'NoSuchKey':
+            raise HTTPException(
+                status_code=404,
+                detail=f"Image '{key}' not found in S3 bucket '{S3_BUCKET_NAME}'."
+            )
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error checking image '{key}' in S3: {e}"
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
+  

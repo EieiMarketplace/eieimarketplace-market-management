@@ -7,7 +7,7 @@ from db.mongo import connect_to_mongo, close_mongo_connection
 from routes import market
 from grpc_server import serve as serve_grpc
 from fastapi.middleware.cors import CORSMiddleware
-import os
+ 
 
 app = FastAPI(title="Eiei Marketplace Market Management")
 

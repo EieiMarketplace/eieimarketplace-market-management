@@ -11,3 +11,4 @@ grpcio-tools>=1.74.0
 boto3
 pydantic-settings
 python-multipart
+aiohttp

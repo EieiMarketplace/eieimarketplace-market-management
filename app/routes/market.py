@@ -5,7 +5,7 @@ from typing import List, Optional
 import grpc
 import uuid
 
-from cloud.cloud import get_presigned_url, upload_file_to_s3
+from cloud.cloud import delete_with_image_key, get_presigned_url, upload_file_to_s3, validate_images_exist
 from models.market import Market 
 import grpc_generated.market_pb2 as market_pb2
 import grpc_generated.market_pb2_grpc as market_pb2_grpc
@@ -78,7 +78,6 @@ async def create_market(
     coverImageFile: Optional[UploadFile] = File(None),
     coverImageKey: Optional[str] = Form(None),
     marketPlanImageFiles: Optional[List[UploadFile]] = File(None),
-    marketPlanKeys: Optional[str] = Form(None),
     logs: Optional[str] = Form("[]"),
     detail: Optional[str] = Form(None),
     rule: Optional[str] = Form(None),
@@ -110,7 +109,7 @@ async def create_market(
                 market_plan_keys.append({"marketPlanKey": s3_filename})
             except RuntimeError as e:
                 raise HTTPException(status_code=500, detail=str(e))
-    
+ 
     try:
         logs_data = json.loads(logs)
     except json.JSONDecodeError:
@@ -122,13 +121,13 @@ async def create_market(
         market_name=marketName,
         address=address,
         cover_image_key=coverImageKey,
-        market_plan_keys=market_plan_keys,
+        market_plan_keys=[],
         logs=logs_data,
         detail=detail,
         rule=rule,
         user_id=userid,
     )
-  
+ 
     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
         stub = market_pb2_grpc.MarketServiceStub(channel)
         # Server may generate id if empty
@@ -237,7 +236,84 @@ async def get_market(market_id: str):
     response_model=Market,
     response_model_by_alias=True,
 )
-async def update_market(market_id: str, market: Market):
+async def update_market(market_id: str,  
+    marketName: str = Form(...),
+    address: str = Form(...),
+    coverImageKey: Optional[str] = Form(None),
+    coverImageFile: Optional[UploadFile] = File(None),
+    logs: Optional[str] = Form("[]"),
+    marketPlanKeys:Optional[str]=Form(None),
+    marketPlanImagesFile:Optional[List[UploadFile]] = File(None),  
+    deletedMarketKeys: Optional[str] = Form(None),  
+    detail: Optional[str] = Form(None),
+    rule: Optional[str] = Form(None),
+    userid: str = Form(...)
+):
+    #IF cover image change
+    #ADD new Image Key
+    if coverImageFile:     
+        #IF have old cover image will delete
+        if coverImageKey!="" and validate_images_exist(coverImageKey):
+            delete_image_from_s3(coverImageKey)
+        
+        if not coverImageFile.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Only image files are allowed.")
+
+        try:
+            file_extension = coverImageFile.filename.split(".")[-1].lower()
+            s3_filename = f"{uuid.uuid4()}.{file_extension}"
+            upload_file_to_s3(coverImageFile.file, s3_filename, coverImageFile.content_type)
+            coverImageKey = s3_filename
+        except RuntimeError as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    
+    #Change String to Json
+    print(marketPlanKeys)
+    print(deletedMarketKeys)
+    try:
+        allMarketPlanKeys = json.loads(marketPlanKeys) if marketPlanKeys else []
+        deletedMarketKeys = json.loads(deletedMarketKeys) if deletedMarketKeys else []
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON format in marketPlanKeys or deletedMarketKeys")
+    
+    #Edit Market Plan
+    #Delete Old Market And Collect Remain Key
+    remain_market_plan_keys = [{"marketPlanKey": key} for key in allMarketPlanKeys if key not in deletedMarketKeys]
+    for image_key in deletedMarketKeys:
+        delete_with_image_key(image_key)
+           
+    # Handle market plan image files
+    if marketPlanImagesFile:
+        for plan_file in marketPlanImagesFile:
+            if not plan_file.content_type.startswith("image/"):
+                raise HTTPException(status_code=400, detail="Only image files are allowed for market plan images.")
+            try:
+                file_extension = plan_file.filename.split(".")[-1].lower()
+                s3_filename = f"{uuid.uuid4()}.{file_extension}"
+                upload_file_to_s3(plan_file.file, s3_filename, plan_file.content_type)
+                remain_market_plan_keys.append({"marketPlanKey": s3_filename})
+            except RuntimeError as e:
+                raise HTTPException(status_code=500, detail=str(e))
+            
+    #adjust log
+    try:
+        logs_data = json.loads(logs or "[]")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON format in logs")
+        
+    market = Market(
+            id= market_id,
+            market_name=marketName,
+            address=address,
+            cover_image_key=coverImageKey,
+            market_plan_keys=remain_market_plan_keys,
+            logs=logs_data,
+            detail=detail,
+            rule=rule,
+            user_id=userid,
+    )
+  
+    
     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
         stub = market_pb2_grpc.MarketServiceStub(channel)
         # enforce path id
@@ -274,5 +350,16 @@ async def upload_image(file: UploadFile = File(...)):
         image= upload_file_to_s3(file.file, s3_filename, content_type)
         image_url = get_presigned_url(s3_filename)
         return {"message": "Image uploaded successfully", "image_url": image_url}
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.delete("/images/{image_key}")
+async def delete_image_from_s3(image_key: str):
+    """
+    Deletes an image from the specified S3 bucket.
+    """
+    try:
+        delete_with_image_key(image_key)
+        return {"message": "delete successfully"}
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
