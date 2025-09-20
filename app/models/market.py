@@ -1,4 +1,5 @@
 from typing import List, Optional
+from fastapi import File, Form, UploadFile
 from pydantic import BaseModel, Field
 
 # ---------- Value Objects ----------
@@ -24,17 +25,17 @@ class Log(BaseModel):
     }
 
 # ---------- Aggregate Root ----------
-
-class Market(BaseModel):
+class Market(BaseModel):   
     id: str
     market_name: Optional[str] = Field(None, alias="marketName")
     address: Optional[str] = None
     cover_image_key: Optional[str] = Field(None, alias="coverImageKey")
-    market_plan_keys: List[MarketPlan] = Field(default_factory=list, alias="marketPlanKeys")
+    market_plan_keys: Optional[List[MarketPlan]] = Field(default_factory=list, alias="marketPlanKeys")
     logs: List[Log] = Field(default_factory=list)
     detail: Optional[str] = None
     rule: Optional[str] = None
     user_id: Optional[str] = Field(None, alias="userid")
+    cover_image_url: Optional[str] = Field(None, alias="coverImageUrl")
 
     model_config = {
         "populate_by_name": True,   # allow using pythonic names in code

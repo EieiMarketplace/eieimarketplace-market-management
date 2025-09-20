@@ -1,9 +1,12 @@
 # app/routes/market.py
-from fastapi import APIRouter, HTTPException
-from typing import List
+import json
+from fastapi import  APIRouter, Form, UploadFile, File, HTTPException
+from typing import List, Optional
 import grpc
+import uuid
 
-from models.market import Market  # <- Pydantic models from previous step
+from cloud.cloud import get_presigned_url, upload_file_to_s3
+from models.market import Market 
 import grpc_generated.market_pb2 as market_pb2
 import grpc_generated.market_pb2_grpc as market_pb2_grpc
 
@@ -68,12 +71,50 @@ def grpc_not_found_to_404(e: grpc.aio.AioRpcError):
 # -------- Routes --------
 
 # Create
-@router.post(
-    "/",
-    response_model=Market,
-    response_model_by_alias=True,  # ensures camelCase in JSON
-)
-async def create_market(market: Market):
+@router.post("/", response_model=Market, response_model_by_alias=True)
+async def create_market(
+    marketName: str = Form(...),
+    address: str = Form(...),
+    coverImageFile: Optional[UploadFile] = File(None),
+    coverImageKey: Optional[str] = Form(None),
+    #TODO: LIST MARKENPLANIMAGE FILE
+    marketPlanKeys: Optional[str] = Form(None),
+    logs: Optional[str] = Form("[]"),
+    detail: Optional[str] = Form(None),
+    rule: Optional[str] = Form(None),
+    userid: str = Form(...)
+):
+    if coverImageFile:
+        if not coverImageFile.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Only image files are allowed.")
+
+        try:
+            file_extension = coverImageFile.filename.split(".")[-1].lower()
+            s3_filename = f"{uuid.uuid4()}.{file_extension}"
+            upload_file_to_s3(coverImageFile.file, s3_filename, coverImageFile.content_type)
+            coverImageKey = s3_filename
+        except RuntimeError as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    try:
+        logs_data = json.loads(logs)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON format in marketPlanKeys or logs")
+    
+    #TODO CREATE LOOP TO MARKET PLAN IMAGE
+    
+    
+    market = Market(
+        id= "1",
+        market_name=marketName,
+        address=address,
+        cover_image_key=coverImageKey,
+        market_plan_keys=marketPlanKeys, #TODO:HERE
+        logs=logs_data,
+        detail=detail,
+        rule=rule,
+        user_id=userid,
+    )
+  
     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
         stub = market_pb2_grpc.MarketServiceStub(channel)
         # Server may generate id if empty
@@ -97,16 +138,16 @@ async def list_markets():
         return [from_proto_market(m) for m in resp.markets]
 
 # Get markets by user ID
-@router.get(
-    "/user/{user_id}",
-    response_model=List[Market],
-    response_model_by_alias=True,
-)
-async def get_markets_by_user_id(user_id: str):
-    async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
-        stub = market_pb2_grpc.MarketServiceStub(channel)
-        resp = await stub.GetMarketByUserID(market_pb2.UserId(user_id=user_id))
-        return [from_proto_market(m) for m in resp.markets]
+# @router.get(
+#     "/user/{user_id}",
+#     response_model=List[Market],
+#     response_model_by_alias=True,
+# )
+# async def get_markets_by_user_id(user_id: str):
+#     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
+#         stub = market_pb2_grpc.MarketServiceStub(channel)
+#         resp = await stub.GetMarketByUserID(market_pb2.UserId(user_id=user_id))
+#         return [from_proto_market(m) for m in resp.markets]
 
 # Search markets
 @router.get(
@@ -136,7 +177,13 @@ async def search_markets(
                 offset=offset
             )
         )
-        return [from_proto_market(m) for m in resp.markets]
+        market_list_res=[]
+        for market_proto in resp.markets:
+            market_res=from_proto_market(market_proto)
+            if(market_res.cover_image_key!="" ):
+                market_res.cover_image_url= get_presigned_url(market_res.cover_image_key)
+            market_list_res.append(market_res)
+        return market_list_res
 
 # Get one
 @router.get(
@@ -149,7 +196,11 @@ async def get_market(market_id: str):
         stub = market_pb2_grpc.MarketServiceStub(channel)
         try:
             resp = await stub.GetMarket(market_pb2.MarketId(id=market_id))
-            return from_proto_market(resp)
+            market_res= from_proto_market(resp)
+            if(market_res.cover_image_key!="" ):
+                market_res.cover_image_url=get_presigned_url(market_res.cover_image_key)
+            #TODO: FOR LOOP CHANGE KEY TO PASS PRESIGN AND RETURN LIST OF THAT
+            return market_res  
         except grpc.aio.AioRpcError as e:
             raise grpc_not_found_to_404(e)
 
@@ -180,3 +231,21 @@ async def delete_market(market_id: str):
             return {"detail": "Deleted successfully"}
         except grpc.aio.AioRpcError as e:
             raise grpc_not_found_to_404(e)
+
+
+@router.post("/upload-image")
+async def upload_image(file: UploadFile = File(...)):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are allowed.")
+
+    try:
+        file_extension = file.filename.split(".")[-1].lower()
+        s3_filename = f"{uuid.uuid4()}.{file_extension}"
+ 
+        content_type = file.content_type   
+
+        image= upload_file_to_s3(file.file, s3_filename, content_type)
+        image_url = get_presigned_url(s3_filename)
+        return {"message": "Image uploaded successfully", "image_url": image_url}
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))

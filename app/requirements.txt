@@ -8,3 +8,6 @@ pydantic-settings
 grpcio>=1.74.0
 protobuf>=6.31.1,<7.0.0
 grpcio-tools>=1.74.0
+boto3
+pydantic-settings
+python-multipart
