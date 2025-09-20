@@ -77,7 +77,7 @@ async def create_market(
     address: str = Form(...),
     coverImageFile: Optional[UploadFile] = File(None),
     coverImageKey: Optional[str] = Form(None),
-    #TODO: LIST MARKENPLANIMAGE FILE
+    marketPlanImageFiles: Optional[List[UploadFile]] = File(None),
     marketPlanKeys: Optional[str] = Form(None),
     logs: Optional[str] = Form("[]"),
     detail: Optional[str] = Form(None),
@@ -95,12 +95,26 @@ async def create_market(
             coverImageKey = s3_filename
         except RuntimeError as e:
             raise HTTPException(status_code=500, detail=str(e))
+    
+    # Handle market plan image files
+    market_plan_keys = []
+    if marketPlanImageFiles:
+        for plan_file in marketPlanImageFiles:
+            if not plan_file.content_type.startswith("image/"):
+                raise HTTPException(status_code=400, detail="Only image files are allowed for market plan images.")
+            
+            try:
+                file_extension = plan_file.filename.split(".")[-1].lower()
+                s3_filename = f"{uuid.uuid4()}.{file_extension}"
+                upload_file_to_s3(plan_file.file, s3_filename, plan_file.content_type)
+                market_plan_keys.append({"marketPlanKey": s3_filename})
+            except RuntimeError as e:
+                raise HTTPException(status_code=500, detail=str(e))
+    
     try:
         logs_data = json.loads(logs)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format in marketPlanKeys or logs")
-    
-    #TODO CREATE LOOP TO MARKET PLAN IMAGE
     
     
     market = Market(
@@ -108,7 +122,7 @@ async def create_market(
         market_name=marketName,
         address=address,
         cover_image_key=coverImageKey,
-        market_plan_keys=marketPlanKeys, #TODO:HERE
+        market_plan_keys=market_plan_keys,
         logs=logs_data,
         detail=detail,
         rule=rule,
@@ -182,6 +196,13 @@ async def search_markets(
             market_res=from_proto_market(market_proto)
             if(market_res.cover_image_key!="" ):
                 market_res.cover_image_url= get_presigned_url(market_res.cover_image_key)
+            
+            # Generate presigned URLs for market plan images
+            if market_res.market_plan_keys:
+                for plan in market_res.market_plan_keys:
+                    if plan.market_plan_key:
+                        plan.market_plan_image_url = get_presigned_url(plan.market_plan_key)
+            
             market_list_res.append(market_res)
         return market_list_res
 
@@ -199,7 +220,13 @@ async def get_market(market_id: str):
             market_res= from_proto_market(resp)
             if(market_res.cover_image_key!="" ):
                 market_res.cover_image_url=get_presigned_url(market_res.cover_image_key)
-            #TODO: FOR LOOP CHANGE KEY TO PASS PRESIGN AND RETURN LIST OF THAT
+            
+            # Generate presigned URLs for market plan images
+            if market_res.market_plan_keys:
+                for plan in market_res.market_plan_keys:
+                    if plan.market_plan_key:
+                        plan.market_plan_image_url = get_presigned_url(plan.market_plan_key)
+            
             return market_res  
         except grpc.aio.AioRpcError as e:
             raise grpc_not_found_to_404(e)

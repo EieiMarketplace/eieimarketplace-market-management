@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 class MarketPlan(BaseModel):
     market_plan_key: str = Field(..., alias="marketPlanKey")
+    market_plan_image_url: Optional[str] = Field(None, alias="marketPlanImageUrl")
 
     model_config = {
         "populate_by_name": True,
