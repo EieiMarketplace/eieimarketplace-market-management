@@ -15,6 +15,7 @@ class MarketPlan(BaseModel):
 
 
 class Log(BaseModel):
+    name: str
     size: str
     price: float
     user_id: int = Field(..., alias="userID")          # vendor ID (FK)

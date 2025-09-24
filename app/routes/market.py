@@ -27,6 +27,7 @@ def to_proto_market(m: Market) -> market_pb2.Market:
         ],
         logs=[
             market_pb2.Log(
+                name= lg.name,
                 size=lg.size,
                 price=lg.price,
                 user_id=lg.user_id,
@@ -49,6 +50,7 @@ def from_proto_market(pm: market_pb2.Market) -> Market:
         market_plan_keys=[{"marketPlanKey": mp.market_plan_key} for mp in pm.market_plan_keys],
         logs=[
             {
+                "name": lg.name,
                 "size": lg.size,
                 "price": lg.price,
                 "userID": lg.user_id,
@@ -101,7 +103,7 @@ async def create_market(
         for plan_file in marketPlanImageFiles:
             if not plan_file.content_type.startswith("image/"):
                 raise HTTPException(status_code=400, detail="Only image files are allowed for market plan images.")
-            
+         
             try:
                 file_extension = plan_file.filename.split(".")[-1].lower()
                 s3_filename = f"{uuid.uuid4()}.{file_extension}"
@@ -109,7 +111,7 @@ async def create_market(
                 market_plan_keys.append({"marketPlanKey": s3_filename})
             except RuntimeError as e:
                 raise HTTPException(status_code=500, detail=str(e))
- 
+        print(market_plan_keys)
     try:
         logs_data = json.loads(logs)
     except json.JSONDecodeError:
@@ -121,7 +123,7 @@ async def create_market(
         market_name=marketName,
         address=address,
         cover_image_key=coverImageKey,
-        market_plan_keys=[],
+        market_plan_keys=market_plan_keys,
         logs=logs_data,
         detail=detail,
         rule=rule,

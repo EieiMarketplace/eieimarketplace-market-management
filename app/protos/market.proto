@@ -8,10 +8,11 @@ message MarketPlan {
 }
 
 message Log {
-  string size = 1;            // e.g., "2x3", "M", "10sqm"
-  double price = 2;           // price for the size
-  int64 user_id = 3;          // vendor user ID (FK)
-  int64 reservation_id = 4;   // reservation ID (FK)
+  string name =1;
+  string size = 2;            // e.g., "2x3", "M", "10sqm"
+  double price = 3;           // price for the size
+  int64 user_id = 4;          // vendor user ID (FK)
+  int64 reservation_id = 5;   // reservation ID (FK)
 }
 
 // ----- Aggregate Root -----
