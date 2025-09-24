@@ -93,6 +93,9 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
 
     # ---------- Create ----------
     async def CreateMarket(self, request, context):
+
+        # TODO: check authorization here with bearer token from metadata
+
         # store with snake_case keys to match proto fields
         doc = {
             "market_name": request.market_name or "",
@@ -142,6 +145,7 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
 
     # ---------- Get one ----------
     async def GetMarket(self, request, context):
+        # TODO: check authorization here with bearer token from metadata
         try:
             oid = ObjectId(request.id)
         except Exception:
@@ -180,6 +184,7 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
 
     # ---------- List all ----------
     async def GetAllMarket(self, request, context):
+        # TODO: check authorization here with bearer token from metadata
         markets = []
         async for doc in self.db["markets"].find():
             markets.append(
@@ -210,6 +215,7 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
 
     # ---------- Get by User ID ----------
     async def GetMarketByUserID(self, request, context):
+        # TODO: check authorization here with bearer token from metadata
         markets = []
         async for doc in self.db["markets"].find({"user_id": request.user_id}):
             markets.append(
@@ -240,6 +246,7 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
 
     # ---------- Search Markets ----------
     async def SearchMarkets(self, request, context):
+        # TODO: check authorization here with bearer token from metadata
         # Build MongoDB query with OR logic
         or_conditions = []
         
@@ -317,6 +324,7 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
 
     # ---------- Update (full replace via $set) ----------
     async def UpdateMarket(self, request, context):
+        # TODO: check authorization here with bearer token from metadata
         try:
             oid = ObjectId(request.id)
         except Exception:
@@ -378,6 +386,7 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
 
     # ---------- Delete ----------
     async def DeleteMarket(self, request, context):
+        # TODO: check authorization here with bearer token from metadata
         try:
             oid = ObjectId(request.id)
         except Exception:
