@@ -26,6 +26,8 @@ message Market {
   string detail = 7;                          // VARCHAR(500)
   string rule = 8;                            // VARCHAR(500)
   string user_id = 9;                         // owner FK (VARCHAR(200))
+  string marketType = 10;
+  bool isOpen = 11;
 }
 
 // ----- Common wrappers -----

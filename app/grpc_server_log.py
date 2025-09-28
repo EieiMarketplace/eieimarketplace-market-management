@@ -7,11 +7,20 @@ import grpc_generated.market_pb2_grpc as market_pb2_grpc
 from db.mongo import connect_to_mongo
 from grpc_generated import market_pb2, market_pb2_grpc
 
+def MakeLog(lg):
+    return market_pb2.Log(
+        name=lg.get("name", "NaN"),
+        size=lg.get("size", ""),
+        price=float(lg.get("price", 0.0)),
+        user_id=int(lg.get("user_id", 0)),
+        reservation_id=int(lg.get("reservation_id", 0)),
+    )
+
 class LogService(market_pb2_grpc.LogServiceServicer):
     def __init__(self, db):
         self.db = db
         print("registered db (LogService) ", self.db)
-
+    
     # ---------- Create ----------
     async def CreateLog(self, request, context):
         try:
@@ -32,6 +41,7 @@ class LogService(market_pb2_grpc.LogServiceServicer):
             return market_pb2.Log()
 
         log_doc = {
+            "name": request.log.name,
             "size": request.log.size,
             "price": float(request.log.price),
             "user_id": int(request.log.user_id),
@@ -46,7 +56,8 @@ class LogService(market_pb2_grpc.LogServiceServicer):
             context.set_details("Market not found")
             return market_pb2.Log()
 
-        return market_pb2.Log(**log_doc)
+        return MakeLog(request.log)
+        #return market_pb2.Log(**log_doc)
 
     # ---------- Get one ----------
     async def GetLog(self, request, context):
@@ -68,12 +79,7 @@ class LogService(market_pb2_grpc.LogServiceServicer):
             return market_pb2.Log()
 
         lg = logs[0]
-        return market_pb2.Log(
-            size=lg.get("size", ""),
-            price=float(lg.get("price", 0.0)),
-            user_id=int(lg.get("user_id", 0)),
-            reservation_id=int(lg.get("reservation_id", 0)),
-        )
+        return MakeLog(lg)
 
     # ---------- List ----------
     async def ListLogs(self, request, context):
@@ -86,13 +92,7 @@ class LogService(market_pb2_grpc.LogServiceServicer):
 
         doc = await self.db["markets"].find_one({"_id": oid}, {"logs": 1})
         logs = [
-            market_pb2.Log(
-                size=lg.get("size", ""),
-                price=float(lg.get("price", 0.0)),
-                user_id=int(lg.get("user_id", 0)),
-                reservation_id=int(lg.get("reservation_id", 0)),
-            )
-            for lg in (doc or {}).get("logs") or []
+            MakeLog(lg) for lg in (doc or {}).get("logs") or []
         ]
         return market_pb2.LogList(logs=logs)
 
@@ -127,12 +127,7 @@ class LogService(market_pb2_grpc.LogServiceServicer):
             {"logs": {"$elemMatch": {"reservation_id": int(request.log.reservation_id)}}}
         )
         lg = ((doc or {}).get("logs") or [{}])[0]
-        return market_pb2.Log(
-            size=lg.get("size", ""),
-            price=float(lg.get("price", 0.0)),
-            user_id=int(lg.get("user_id", 0)),
-            reservation_id=int(lg.get("reservation_id", 0)),
-        )
+        return MakeLog(lg)
 
     # ---------- Delete ----------
     async def DeleteLog(self, request, context):

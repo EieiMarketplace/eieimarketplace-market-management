@@ -38,6 +38,8 @@ def to_proto_market(m: Market) -> market_pb2.Market:
         detail=(m.detail or ""),
         rule=(m.rule or ""),
         user_id=(m.user_id or ""),
+        isOpen=(m.isOpen or False),
+        marketType=(m.marketType or "Market")
     )
 
 
@@ -61,6 +63,8 @@ def from_proto_market(pm: market_pb2.Market) -> Market:
         detail=pm.detail,
         rule=pm.rule,
         user_id=pm.user_id,
+        isOpen=pm.isOpen,
+        marketType=pm.marketType
     )
 
 
@@ -83,7 +87,10 @@ async def create_market(
     logs: Optional[str] = Form("[]"),
     detail: Optional[str] = Form(None),
     rule: Optional[str] = Form(None),
-    userid: str = Form(...)
+    userid: str = Form(...),
+    isOpen: bool = Form(None),
+    marketType: str = Form(None)
+
 ):
     if coverImageFile:
         if not coverImageFile.content_type.startswith("image/"):
@@ -128,6 +135,8 @@ async def create_market(
         detail=detail,
         rule=rule,
         user_id=userid,
+        isOpen=isOpen,
+        marketType=marketType
     )
  
     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
@@ -245,11 +254,13 @@ async def update_market(market_id: str,
     coverImageFile: Optional[UploadFile] = File(None),
     logs: Optional[str] = Form("[]"),
     marketPlanKeys:Optional[str]=Form(None),
-    marketPlanImagesFile:Optional[List[UploadFile]] = File(None),  
+    marketPlanImageFiles:Optional[List[UploadFile]] = File(None),  
     deletedMarketKeys: Optional[str] = Form(None),  
     detail: Optional[str] = Form(None),
     rule: Optional[str] = Form(None),
-    userid: str = Form(...)
+    userid: str = Form(...),
+    isOpen: bool = Form(None),
+    marketType: str = Form(None),
 ):
     #IF cover image change
     #ADD new Image Key
@@ -270,8 +281,8 @@ async def update_market(market_id: str,
             raise HTTPException(status_code=500, detail=str(e))
     
     #Change String to Json
-    print(marketPlanKeys)
-    print(deletedMarketKeys)
+    print("plan key", marketPlanKeys)
+    print("deletedKey", deletedMarketKeys)
     try:
         allMarketPlanKeys = json.loads(marketPlanKeys) if marketPlanKeys else []
         deletedMarketKeys = json.loads(deletedMarketKeys) if deletedMarketKeys else []
@@ -285,8 +296,8 @@ async def update_market(market_id: str,
         delete_with_image_key(image_key)
            
     # Handle market plan image files
-    if marketPlanImagesFile:
-        for plan_file in marketPlanImagesFile:
+    if marketPlanImageFiles:
+        for plan_file in marketPlanImageFiles:
             if not plan_file.content_type.startswith("image/"):
                 raise HTTPException(status_code=400, detail="Only image files are allowed for market plan images.")
             try:
@@ -302,6 +313,7 @@ async def update_market(market_id: str,
         logs_data = json.loads(logs or "[]")
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format in logs")
+    print(marketPlanImageFiles, remain_market_plan_keys)
         
     market = Market(
             id= market_id,
@@ -313,6 +325,8 @@ async def update_market(market_id: str,
             detail=detail,
             rule=rule,
             user_id=userid,
+            isOpen=isOpen,
+            marketType=marketType
     )
   
     
