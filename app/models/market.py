@@ -38,6 +38,8 @@ class Market(BaseModel):
     rule: Optional[str] = None
     user_id: Optional[str] = Field(None, alias="userid")
     cover_image_url: Optional[str] = Field(None, alias="coverImageUrl")
+    isOpen: Optional[bool] = None
+    marketType: Optional[str] = None
 
     model_config = {
         "populate_by_name": True,   # allow using pythonic names in code

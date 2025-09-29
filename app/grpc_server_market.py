@@ -86,6 +86,33 @@ import grpc_generated.market_pb2_grpc as market_pb2_grpc
 #             context.set_details("Item not found")
 #         return market_pb2.Empty()
 
+def MakeMarket(created):
+    return market_pb2.Market(
+        id=str(created.get("_id", "")) if created.get("_id", "") else "",
+        market_name=created.get("market_name", ""),
+        address=created.get("address", ""),
+        cover_image_key=created.get("cover_image_key", ""),
+        market_plan_keys=[
+            market_pb2.MarketPlan(market_plan_key=mp.get("market_plan_key", ""))
+            for mp in (created.get("market_plan_keys") or [])
+        ],
+        logs=[
+            market_pb2.Log(
+                name=lg.get("name", "NaN"),
+                size=lg.get("size", ""),
+                price=float(lg.get("price", 0.0)),
+                user_id=int(lg.get("user_id", 0)),
+                reservation_id=int(lg.get("reservation_id", 0)),
+            )
+            for lg in (created.get("logs") or [])
+        ],
+        detail=created.get("detail", ""),
+        rule=created.get("rule", ""),
+        user_id=created.get("user_id", ""),
+        isOpen=created.get("isOpen", False),
+        marketType=created.get("marketType", "Market"),
+    )
+
 class MarketService(market_pb2_grpc.MarketServiceServicer):
     def __init__(self, db):
         self.db = db
@@ -93,9 +120,6 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
 
     # ---------- Create ----------
     async def CreateMarket(self, request, context):
-
-        # TODO: check authorization here with bearer token from metadata
-
         # store with snake_case keys to match proto fields
         doc = {
             "market_name": request.market_name or "",
@@ -107,6 +131,7 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
             ],
             "logs": [
                 {
+                    "name": lg.name,
                     "size": lg.size,
                     "price": float(lg.price),
                     "user_id": int(lg.user_id),
@@ -120,133 +145,46 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
         }
         result = await self.db["markets"].insert_one(doc)
         created = await self.db["markets"].find_one({"_id": result.inserted_id})
-        return market_pb2.Market(
-            id=str(created["_id"]),
-            market_name=created.get("market_name", ""),
-            address=created.get("address", ""),
-            cover_image_key=created.get("cover_image_key", ""),
-            market_plan_keys=[
-                market_pb2.MarketPlan(market_plan_key=mp.get("market_plan_key", ""))
-                for mp in (created.get("market_plan_keys") or [])
-            ],
-            logs=[
-                market_pb2.Log(
-                    size=lg.get("size", ""),
-                    price=float(lg.get("price", 0.0)),
-                    user_id=int(lg.get("user_id", 0)),
-                    reservation_id=int(lg.get("reservation_id", 0)),
-                )
-                for lg in (created.get("logs") or [])
-            ],
-            detail=created.get("detail", ""),
-            rule=created.get("rule", ""),
-            user_id=created.get("user_id", ""),
-        )
+        return MakeMarket(created)
 
     # ---------- Get one ----------
     async def GetMarket(self, request, context):
-        # TODO: check authorization here with bearer token from metadata
         try:
             oid = ObjectId(request.id)
         except Exception:
             context.set_code(grpc.StatusCode.NOT_FOUND)
             context.set_details("Invalid ID")
             return market_pb2.Market()
-
+        
+        print("get2")
         doc = await self.db["markets"].find_one({"_id": oid})
         if not doc:
             context.set_code(grpc.StatusCode.NOT_FOUND)
             context.set_details("Market not found")
             return market_pb2.Market()
 
-        return market_pb2.Market(
-            id=str(doc["_id"]),
-            market_name=doc.get("market_name", ""),
-            address=doc.get("address", ""),
-            cover_image_key=doc.get("cover_image_key", ""),
-            market_plan_keys=[
-                market_pb2.MarketPlan(market_plan_key=mp.get("market_plan_key", ""))
-                for mp in (doc.get("market_plan_keys") or [])
-            ],
-            logs=[
-                market_pb2.Log(
-                    size=lg.get("size", ""),
-                    price=float(lg.get("price", 0.0)),
-                    user_id=int(lg.get("user_id", 0)),
-                    reservation_id=int(lg.get("reservation_id", 0)),
-                )
-                for lg in (doc.get("logs") or [])
-            ],
-            detail=doc.get("detail", ""),
-            rule=doc.get("rule", ""),
-            user_id=doc.get("user_id", ""),
-        )
+        return MakeMarket(doc)
 
     # ---------- List all ----------
     async def GetAllMarket(self, request, context):
-        # TODO: check authorization here with bearer token from metadata
         markets = []
         async for doc in self.db["markets"].find():
             markets.append(
-                market_pb2.Market(
-                    id=str(doc.get("_id", "")),
-                    market_name=doc.get("market_name", ""),
-                    address=doc.get("address", ""),
-                    cover_image_key=doc.get("cover_image_key", ""),
-                    market_plan_keys=[
-                        market_pb2.MarketPlan(market_plan_key=mp.get("market_plan_key", ""))
-                        for mp in (doc.get("market_plan_keys") or [])
-                    ],
-                    logs=[
-                        market_pb2.Log(
-                            size=lg.get("size", ""),
-                            price=float(lg.get("price", 0.0)),
-                            user_id=int(lg.get("user_id", 0)),
-                            reservation_id=int(lg.get("reservation_id", 0)),
-                        )
-                        for lg in (doc.get("logs") or [])
-                    ],
-                    detail=doc.get("detail", ""),
-                    rule=doc.get("rule", ""),
-                    user_id=doc.get("user_id", ""),
-                )
+                MakeMarket(doc)
             )
         return market_pb2.MarketList(markets=markets)
 
     # ---------- Get by User ID ----------
     async def GetMarketByUserID(self, request, context):
-        # TODO: check authorization here with bearer token from metadata
         markets = []
         async for doc in self.db["markets"].find({"user_id": request.user_id}):
             markets.append(
-                market_pb2.Market(
-                    id=str(doc.get("_id", "")),
-                    market_name=doc.get("market_name", ""),
-                    address=doc.get("address", ""),
-                    cover_image_key=doc.get("cover_image_key", ""),
-                    market_plan_keys=[
-                        market_pb2.MarketPlan(market_plan_key=mp.get("market_plan_key", ""))
-                        for mp in (doc.get("market_plan_keys") or [])
-                    ],
-                    logs=[
-                        market_pb2.Log(
-                            size=lg.get("size", ""),
-                            price=float(lg.get("price", 0.0)),
-                            user_id=int(lg.get("user_id", 0)),
-                            reservation_id=int(lg.get("reservation_id", 0)),
-                        )
-                        for lg in (doc.get("logs") or [])
-                    ],
-                    detail=doc.get("detail", ""),
-                    rule=doc.get("rule", ""),
-                    user_id=doc.get("user_id", ""),
-                )
+                MakeMarket(doc)
             )
         return market_pb2.MarketList(markets=markets)
 
     # ---------- Search Markets ----------
     async def SearchMarkets(self, request, context):
-        # TODO: check authorization here with bearer token from metadata
         # Build MongoDB query with OR logic
         or_conditions = []
         
@@ -291,28 +229,7 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
         markets = []
         async for doc in self.db["markets"].find(query).skip(offset).limit(limit):
             markets.append(
-                market_pb2.Market(
-                    id=str(doc.get("_id", "")),
-                    market_name=doc.get("market_name", ""),
-                    address=doc.get("address", ""),
-                    cover_image_key=doc.get("cover_image_key", ""),
-                    market_plan_keys=[
-                        market_pb2.MarketPlan(market_plan_key=mp.get("market_plan_key", ""))
-                        for mp in (doc.get("market_plan_keys") or [])
-                    ],
-                    logs=[
-                        market_pb2.Log(
-                            size=lg.get("size", ""),
-                            price=float(lg.get("price", 0.0)),
-                            user_id=int(lg.get("user_id", 0)),
-                            reservation_id=int(lg.get("reservation_id", 0)),
-                        )
-                        for lg in (doc.get("logs") or [])
-                    ],
-                    detail=doc.get("detail", ""),
-                    rule=doc.get("rule", ""),
-                    user_id=doc.get("user_id", ""),
-                )
+                MakeMarket(doc)
             )
         
         return market_pb2.SearchMarketsResponse(
@@ -324,7 +241,6 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
 
     # ---------- Update (full replace via $set) ----------
     async def UpdateMarket(self, request, context):
-        # TODO: check authorization here with bearer token from metadata
         try:
             oid = ObjectId(request.id)
         except Exception:
@@ -342,6 +258,7 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
             ],
             "logs": [
                 {
+                    "name": lg.name,
                     "size": lg.size,
                     "price": float(lg.price),
                     "user_id": int(lg.user_id),
@@ -352,6 +269,8 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
             "detail": request.detail or "",
             "rule": request.rule or "",
             "user_id": request.user_id or "",
+            "isOpen": request.isOpen or False,
+            "marketType": request.marketType or "Market"
         }
 
         result = await self.db["markets"].update_one({"_id": oid}, {"$set": new_data})
@@ -361,32 +280,10 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
             return market_pb2.Market()
 
         doc = await self.db["markets"].find_one({"_id": oid})
-        return market_pb2.Market(
-            id=str(doc["_id"]),
-            market_name=doc.get("market_name", ""),
-            address=doc.get("address", ""),
-            cover_image_key=doc.get("cover_image_key", ""),
-            market_plan_keys=[
-                market_pb2.MarketPlan(market_plan_key=mp.get("market_plan_key", ""))
-                for mp in (doc.get("market_plan_keys") or [])
-            ],
-            logs=[
-                market_pb2.Log(
-                    size=lg.get("size", ""),
-                    price=float(lg.get("price", 0.0)),
-                    user_id=int(lg.get("user_id", 0)),
-                    reservation_id=int(lg.get("reservation_id", 0)),
-                )
-                for lg in (doc.get("logs") or [])
-            ],
-            detail=doc.get("detail", ""),
-            rule=doc.get("rule", ""),
-            user_id=doc.get("user_id", ""),
-        )
+        return MakeMarket(doc)
 
     # ---------- Delete ----------
     async def DeleteMarket(self, request, context):
-        # TODO: check authorization here with bearer token from metadata
         try:
             oid = ObjectId(request.id)
         except Exception:
