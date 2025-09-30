@@ -12,8 +12,8 @@ def MakeLog(lg):
         name=lg.get("name", "NaN"),
         size=lg.get("size", ""),
         price=float(lg.get("price", 0.0)),
-        user_id=int(lg.get("user_id", 0)),
-        reservation_id=int(lg.get("reservation_id", 0)),
+        user_id=(lg.get("user_id", "")),
+        reservation_id=(lg.get("reservation_id", "")),
     )
 
 class LogService(market_pb2_grpc.LogServiceServicer):
@@ -44,8 +44,8 @@ class LogService(market_pb2_grpc.LogServiceServicer):
             "name": request.log.name,
             "size": request.log.size,
             "price": float(request.log.price),
-            "user_id": int(request.log.user_id),
-            "reservation_id": int(request.log.reservation_id),
+            "user_id":  request.log.user_id ,
+            "reservation_id":  request.log.reservation_id ,
         }
         result = await self.db["markets"].update_one(
             {"_id": oid},
@@ -70,7 +70,7 @@ class LogService(market_pb2_grpc.LogServiceServicer):
 
         doc = await self.db["markets"].find_one(
             {"_id": oid},
-            {"logs": {"$elemMatch": {"reservation_id": int(request.reservation_id)}}}
+            {"logs": {"$elemMatch": {"reservation_id":  request.reservation_id }}}
         )
         logs = (doc or {}).get("logs") or []
         if not logs:
@@ -107,13 +107,13 @@ class LogService(market_pb2_grpc.LogServiceServicer):
 
         # update by reservation_id
         result = await self.db["markets"].update_one(
-            {"_id": oid, "logs.reservation_id": int(request.log.reservation_id)},
+            {"_id": oid, "logs.reservation_id":  request.log.reservation_id },
             {"$set": {
                 "logs.$.size": request.log.size,
                 "logs.$.price": float(request.log.price),
-                "logs.$.user_id": int(request.log.user_id),
+                "logs.$.user_id":  request.log.user_id ,
                 # reservation_id remains the identifier; can still be set to same value
-                "logs.$.reservation_id": int(request.log.reservation_id),
+                "logs.$.reservation_id":  request.log.reservation_id,
             }}
         )
         if result.matched_count == 0:
@@ -124,7 +124,7 @@ class LogService(market_pb2_grpc.LogServiceServicer):
         # return updated log
         doc = await self.db["markets"].find_one(
             {"_id": oid},
-            {"logs": {"$elemMatch": {"reservation_id": int(request.log.reservation_id)}}}
+            {"logs": {"$elemMatch": {"reservation_id":  request.log.reservation_id }}}
         )
         lg = ((doc or {}).get("logs") or [{}])[0]
         return MakeLog(lg)
@@ -140,7 +140,7 @@ class LogService(market_pb2_grpc.LogServiceServicer):
 
         result = await self.db["markets"].update_one(
             {"_id": oid},
-            {"$pull": {"logs": {"reservation_id": int(request.reservation_id)}}}
+            {"$pull": {"logs": {"reservation_id":  request.reservation_id }}}
         )
         if result.matched_count == 0:
             context.set_code(grpc.StatusCode.NOT_FOUND)
