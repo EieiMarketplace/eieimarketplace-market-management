@@ -41,8 +41,6 @@ def to_proto_market(m: Market) -> market_pb2.Market:
         user_id=(m.user_id or ""),
         isOpen=(m.isOpen or False),
         marketType=(m.marketType or "Market")
-        isOpen=(m.isOpen or False),
-        marketType=(m.marketType or "Market")
     )
 
 
