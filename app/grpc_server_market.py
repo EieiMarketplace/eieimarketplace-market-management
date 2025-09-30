@@ -87,6 +87,7 @@ import grpc_generated.market_pb2_grpc as market_pb2_grpc
 #         return market_pb2.Empty()
 
 def MakeMarket(created):
+    print("Helloooooooooooooooooooooooooooooooooooooooooooo",created)
     return market_pb2.Market(
         id=str(created.get("_id", "")) if created.get("_id", "") else "",
         market_name=created.get("market_name", ""),
@@ -101,8 +102,8 @@ def MakeMarket(created):
                 name=lg.get("name", "NaN"),
                 size=lg.get("size", ""),
                 price=float(lg.get("price", 0.0)),
-                user_id=int(lg.get("user_id", 0)),
-                reservation_id=int(lg.get("reservation_id", 0)),
+                user_id=lg.get("user_id", ""),
+                reservation_id=lg.get("reservation_id", "")
             )
             for lg in (created.get("logs") or [])
         ],
@@ -134,8 +135,8 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
                     "name": lg.name,
                     "size": lg.size,
                     "price": float(lg.price),
-                    "user_id": int(lg.user_id),
-                    "reservation_id": int(lg.reservation_id),
+                    "user_id": lg.user_id,
+                    "reservation_id": lg.reservation_id,
                 }
                 for lg in request.logs
             ],
@@ -172,6 +173,7 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
             markets.append(
                 MakeMarket(doc)
             )
+        print("SUBMITTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
         return market_pb2.MarketList(markets=markets)
 
     # ---------- Get by User ID ----------
@@ -261,8 +263,8 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
                     "name": lg.name,
                     "size": lg.size,
                     "price": float(lg.price),
-                    "user_id": int(lg.user_id),
-                    "reservation_id": int(lg.reservation_id),
+                    "user_id": lg.user_id,
+                    "reservation_id": lg.reservation_id,
                 }
                 for lg in request.logs
             ],

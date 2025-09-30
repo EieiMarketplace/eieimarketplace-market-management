@@ -96,6 +96,7 @@ async def create_market(
     marketType: str = Form(None),
     user_info: UserInfo = Depends(require_organizer_auth)  # Auth check
 ):
+    print("1")
     if coverImageFile:
         if not coverImageFile.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="Only image files are allowed.")
@@ -322,6 +323,7 @@ async def update_market(
         logs_data = json.loads(logs or "[]")
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format in logs")
+    print(marketPlanImageFiles, remain_market_plan_keys)
     print(marketPlanImageFiles, remain_market_plan_keys)
         
     market = Market(

@@ -18,8 +18,8 @@ class Log(BaseModel):
     name: str
     size: str
     price: float
-    user_id: int = Field(..., alias="userID")          # vendor ID (FK)
-    reservation_id: int = Field(..., alias="reservationID")
+    user_id: str = Field(..., alias="userID")          # vendor ID (FK)
+    reservation_id: str = Field(..., alias="reservationID")
 
     model_config = {
         "populate_by_name": True,
