@@ -45,6 +45,13 @@ class Market(BaseModel):
         "populate_by_name": True,   # allow using pythonic names in code
         "extra": "ignore"           # ignore unknown props from NoSQL docs
     }
+    
+# ---------- Aggregate Root ----------
+class MarketSearchResponse(BaseModel):   
+    market: List[Market]
+    total_count: int
+    limit:int
+    
 
 # ---------- Simple wrappers ----------
 

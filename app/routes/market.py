@@ -6,7 +6,7 @@ import grpc
 import uuid
 
 from cloud.cloud import delete_with_image_key, get_presigned_url, upload_file_to_s3, validate_images_exist
-from models.market import Market 
+from models.market import Market, MarketSearchResponse 
 import grpc_generated.market_pb2 as market_pb2
 import grpc_generated.market_pb2_grpc as market_pb2_grpc
 from auth.auth import require_organizer_auth, UserInfo
@@ -96,7 +96,7 @@ async def create_market(
     marketType: str = Form(None),
     user_info: UserInfo = Depends(require_organizer_auth)  # Auth check
 ):
-    print("1")
+ 
     if coverImageFile:
         if not coverImageFile.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="Only image files are allowed.")
@@ -123,7 +123,7 @@ async def create_market(
                 market_plan_keys.append({"marketPlanKey": s3_filename})
             except RuntimeError as e:
                 raise HTTPException(status_code=500, detail=str(e))
-        print(market_plan_keys)
+        
     try:
         logs_data = json.loads(logs)
     except json.JSONDecodeError:
@@ -185,7 +185,7 @@ async def list_markets():
 # Search markets (Public - no auth required)
 @router.get(
     "/search",
-    response_model=List[Market],
+    response_model=MarketSearchResponse,
     response_model_by_alias=True,
 )
 async def search_markets(
@@ -210,6 +210,7 @@ async def search_markets(
                 offset=offset
             )
         )
+        print("Check Rsppppppppppppppppppppppppppp",resp)
         market_list_res=[]
         for market_proto in resp.markets:
             market_res=from_proto_market(market_proto)
@@ -223,7 +224,8 @@ async def search_markets(
                         plan.market_plan_image_url = get_presigned_url(plan.market_plan_key)
             
             market_list_res.append(market_res)
-        return market_list_res
+           
+        return MarketSearchResponse(market=market_list_res,limit=resp.limit,total_count=resp.total_count)
 
 # Get one (Public - no auth required)
 @router.get(
@@ -324,7 +326,7 @@ async def update_market(
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format in logs")
     print(marketPlanImageFiles, remain_market_plan_keys)
-    print(marketPlanImageFiles, remain_market_plan_keys)
+ 
         
     market = Market(
             id= market_id,

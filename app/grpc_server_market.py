@@ -87,7 +87,7 @@ import grpc_generated.market_pb2_grpc as market_pb2_grpc
 #         return market_pb2.Empty()
 
 def MakeMarket(created):
-    print("Helloooooooooooooooooooooooooooooooooooooooooooo",created)
+     
     return market_pb2.Market(
         id=str(created.get("_id", "")) if created.get("_id", "") else "",
         market_name=created.get("market_name", ""),
@@ -173,7 +173,7 @@ class MarketService(market_pb2_grpc.MarketServiceServicer):
             markets.append(
                 MakeMarket(doc)
             )
-        print("SUBMITTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT")
+        
         return market_pb2.MarketList(markets=markets)
 
     # ---------- Get by User ID ----------
