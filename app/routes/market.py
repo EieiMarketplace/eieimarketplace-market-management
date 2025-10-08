@@ -126,6 +126,11 @@ async def create_market(
         
     try:
         logs_data = json.loads(logs)
+        _log_names = [log["name"] for log in logs_data]
+        _duplicates = [name for name in set(_log_names) if _log_names.count(name) > 1]
+        if _duplicates:
+            raise HTTPException(status_code=400, detail=f"Duplicate log names found: {', '.join(_duplicates)}")
+
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid JSON format in marketPlanKeys or logs")
     
