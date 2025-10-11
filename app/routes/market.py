@@ -173,7 +173,13 @@ async def list_markets():
     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
         stub = market_pb2_grpc.MarketServiceStub(channel)
         resp = await stub.GetAllMarket(market_pb2.Empty())
-        return [from_proto_market(m) for m in resp.markets]
+        market_list_res=[]
+        for market_proto in resp.markets:
+            market_res=from_proto_market(market_proto)
+            if(market_res.cover_image_key!="" ):
+                market_res.cover_image_url= get_presigned_url(market_res.cover_image_key)
+            market_list_res.append(market_res)
+        return  market_list_res
 
 # Get markets by user ID
 # @router.get(
@@ -204,6 +210,7 @@ async def search_markets(
 ):
     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
         stub = market_pb2_grpc.MarketServiceStub(channel)
+        
         resp = await stub.SearchMarkets(
             market_pb2.SearchMarketsRequest(
                 query=query or "",
