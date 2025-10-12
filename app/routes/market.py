@@ -426,3 +426,80 @@ async def test_auth(user_info: UserInfo = Depends(require_organizer_auth)):
         "role": user_info.role,
         "authenticated": True
     }
+    
+    
+@router.patch(
+    "/change/{market_id}",
+    response_model=Market,
+    response_model_by_alias=True,
+)
+async def update_market_speacial(
+    market_id: str,  
+    marketName: str = Form(...),
+    address: str = Form(...),
+    coverImageKey: Optional[str] = Form(None),
+    coverImageFile: Optional[UploadFile] = File(None),
+    logs: Optional[str] = Form("[]"),
+    marketPlanKeys:Optional[str]=Form(None),
+    marketPlanImageFiles:Optional[List[UploadFile]] = File(None),  
+    deletedMarketKeys: Optional[str] = Form(None),  
+    detail: Optional[str] = Form(None),
+    rule: Optional[str] = Form(None),
+    isOpen: bool = Form(None),
+    marketType: str = Form(None),
+    user_info: UserInfo = Depends(require_organizer_auth)  # Auth check
+):
+    
+     
+    
+  
+    print("INONG INONG INONG")
+    print("plan key", marketPlanKeys)
+    print("deletedKey", deletedMarketKeys)
+    try:
+        allMarketPlanKeys = json.loads(marketPlanKeys) if marketPlanKeys else []
+        deletedMarketKeys = json.loads(deletedMarketKeys) if deletedMarketKeys else []
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON format in marketPlanKeys or deletedMarketKeys")
+    
+    #Edit Market Plan
+    #Delete Old Market And Collect Remain Key
+    remain_market_plan_keys = [{"marketPlanKey": key} for key in allMarketPlanKeys if key not in deletedMarketKeys]
+    
+            
+    #adjust log
+    try:
+        logs_data = json.loads(logs or "[]")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON format in logs")
+    print(marketPlanImageFiles, remain_market_plan_keys)
+    
+        
+    market = Market(
+            id= market_id,
+            market_name=marketName,
+            address=address,
+            cover_image_key=coverImageKey,
+            market_plan_keys=remain_market_plan_keys,
+            logs=logs_data,
+            detail=detail,
+            rule=rule,
+            user_id=user_info.user_id,  # Use authenticated user's ID
+            isOpen=isOpen,
+            marketType=marketType
+    )
+  
+    print("TEST PASS")
+    async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
+        stub = market_pb2_grpc.MarketServiceStub(channel)
+        # enforce path id
+        m = market.model_copy(update={"id": market_id})
+        
+        # Add authorization metadata for gRPC call
+        metadata = [('authorization', f'Bearer {user_info.token}')]
+        
+        try:
+            resp = await stub.UpdateMarket(to_proto_market(m), metadata=metadata)
+            return from_proto_market(resp)
+        except grpc.aio.AioRpcError as e:
+            raise grpc_not_found_to_404(e)
