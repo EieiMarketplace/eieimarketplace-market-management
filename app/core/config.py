@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str
     REGION_NAME: str
     S3_BUCKET_NAME: str
+    FRONTEND_URL:str 
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
