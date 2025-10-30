@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     close_mongo_connection()
 
-app.include_router(market.router, prefix="/markets", tags=["Markets"])
+app.include_router(market.router, prefix="/api/markets", tags=["Markets"])
 
 async def serve_fastapi():
     config = uvicorn.Config(app, host="0.0.0.0", port=7002)
