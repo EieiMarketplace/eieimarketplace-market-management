@@ -5,7 +5,7 @@ import warnings
 
 from . import market_pb2 as market__pb2
 
-GRPC_GENERATED_VERSION = '1.74.0'
+GRPC_GENERATED_VERSION = '1.75.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -26,7 +26,8 @@ if _version_not_supported:
 
 
 class MarketServiceStub(object):
-    """Service definition
+    """----- Service definition -----
+    Keeping the same CRUD interface you already have.
     """
 
     def __init__(self, channel):
@@ -36,34 +37,45 @@ class MarketServiceStub(object):
             channel: A grpc.Channel.
         """
         self.GetAllMarket = channel.unary_unary(
-                '/MarketService/GetAllMarket',
+                '/market.MarketService/GetAllMarket',
                 request_serializer=market__pb2.Empty.SerializeToString,
                 response_deserializer=market__pb2.MarketList.FromString,
                 _registered_method=True)
         self.CreateMarket = channel.unary_unary(
-                '/MarketService/CreateMarket',
+                '/market.MarketService/CreateMarket',
                 request_serializer=market__pb2.Market.SerializeToString,
                 response_deserializer=market__pb2.Market.FromString,
                 _registered_method=True)
         self.GetMarket = channel.unary_unary(
-                '/MarketService/GetMarket',
+                '/market.MarketService/GetMarket',
                 request_serializer=market__pb2.MarketId.SerializeToString,
                 response_deserializer=market__pb2.Market.FromString,
                 _registered_method=True)
+        self.GetMarketByUserID = channel.unary_unary(
+                '/market.MarketService/GetMarketByUserID',
+                request_serializer=market__pb2.UserId.SerializeToString,
+                response_deserializer=market__pb2.MarketList.FromString,
+                _registered_method=True)
+        self.SearchMarkets = channel.unary_unary(
+                '/market.MarketService/SearchMarkets',
+                request_serializer=market__pb2.SearchMarketsRequest.SerializeToString,
+                response_deserializer=market__pb2.SearchMarketsResponse.FromString,
+                _registered_method=True)
         self.UpdateMarket = channel.unary_unary(
-                '/MarketService/UpdateMarket',
+                '/market.MarketService/UpdateMarket',
                 request_serializer=market__pb2.Market.SerializeToString,
                 response_deserializer=market__pb2.Market.FromString,
                 _registered_method=True)
         self.DeleteMarket = channel.unary_unary(
-                '/MarketService/DeleteMarket',
+                '/market.MarketService/DeleteMarket',
                 request_serializer=market__pb2.MarketId.SerializeToString,
                 response_deserializer=market__pb2.Empty.FromString,
                 _registered_method=True)
 
 
 class MarketServiceServicer(object):
-    """Service definition
+    """----- Service definition -----
+    Keeping the same CRUD interface you already have.
     """
 
     def GetAllMarket(self, request, context):
@@ -79,6 +91,18 @@ class MarketServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def GetMarket(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetMarketByUserID(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SearchMarkets(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -114,6 +138,16 @@ def add_MarketServiceServicer_to_server(servicer, server):
                     request_deserializer=market__pb2.MarketId.FromString,
                     response_serializer=market__pb2.Market.SerializeToString,
             ),
+            'GetMarketByUserID': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMarketByUserID,
+                    request_deserializer=market__pb2.UserId.FromString,
+                    response_serializer=market__pb2.MarketList.SerializeToString,
+            ),
+            'SearchMarkets': grpc.unary_unary_rpc_method_handler(
+                    servicer.SearchMarkets,
+                    request_deserializer=market__pb2.SearchMarketsRequest.FromString,
+                    response_serializer=market__pb2.SearchMarketsResponse.SerializeToString,
+            ),
             'UpdateMarket': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateMarket,
                     request_deserializer=market__pb2.Market.FromString,
@@ -126,14 +160,15 @@ def add_MarketServiceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'MarketService', rpc_method_handlers)
+            'market.MarketService', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('MarketService', rpc_method_handlers)
+    server.add_registered_method_handlers('market.MarketService', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
 class MarketService(object):
-    """Service definition
+    """----- Service definition -----
+    Keeping the same CRUD interface you already have.
     """
 
     @staticmethod
@@ -150,7 +185,7 @@ class MarketService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/MarketService/GetAllMarket',
+            '/market.MarketService/GetAllMarket',
             market__pb2.Empty.SerializeToString,
             market__pb2.MarketList.FromString,
             options,
@@ -177,7 +212,7 @@ class MarketService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/MarketService/CreateMarket',
+            '/market.MarketService/CreateMarket',
             market__pb2.Market.SerializeToString,
             market__pb2.Market.FromString,
             options,
@@ -204,9 +239,63 @@ class MarketService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/MarketService/GetMarket',
+            '/market.MarketService/GetMarket',
             market__pb2.MarketId.SerializeToString,
             market__pb2.Market.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetMarketByUserID(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.MarketService/GetMarketByUserID',
+            market__pb2.UserId.SerializeToString,
+            market__pb2.MarketList.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def SearchMarkets(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.MarketService/SearchMarkets',
+            market__pb2.SearchMarketsRequest.SerializeToString,
+            market__pb2.SearchMarketsResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -231,7 +320,7 @@ class MarketService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/MarketService/UpdateMarket',
+            '/market.MarketService/UpdateMarket',
             market__pb2.Market.SerializeToString,
             market__pb2.Market.FromString,
             options,
@@ -258,8 +347,499 @@ class MarketService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/MarketService/DeleteMarket',
+            '/market.MarketService/DeleteMarket',
             market__pb2.MarketId.SerializeToString,
+            market__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class MarketPlanServiceStub(object):
+    """===== Services =====
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.CreateMarketPlan = channel.unary_unary(
+                '/market.MarketPlanService/CreateMarketPlan',
+                request_serializer=market__pb2.CreateMarketPlanRequest.SerializeToString,
+                response_deserializer=market__pb2.MarketPlan.FromString,
+                _registered_method=True)
+        self.GetMarketPlan = channel.unary_unary(
+                '/market.MarketPlanService/GetMarketPlan',
+                request_serializer=market__pb2.MarketPlanId.SerializeToString,
+                response_deserializer=market__pb2.MarketPlan.FromString,
+                _registered_method=True)
+        self.ListMarketPlans = channel.unary_unary(
+                '/market.MarketPlanService/ListMarketPlans',
+                request_serializer=market__pb2.MarketId.SerializeToString,
+                response_deserializer=market__pb2.MarketPlanList.FromString,
+                _registered_method=True)
+        self.UpdateMarketPlan = channel.unary_unary(
+                '/market.MarketPlanService/UpdateMarketPlan',
+                request_serializer=market__pb2.UpdateMarketPlanRequest.SerializeToString,
+                response_deserializer=market__pb2.MarketPlan.FromString,
+                _registered_method=True)
+        self.DeleteMarketPlan = channel.unary_unary(
+                '/market.MarketPlanService/DeleteMarketPlan',
+                request_serializer=market__pb2.MarketPlanId.SerializeToString,
+                response_deserializer=market__pb2.Empty.FromString,
+                _registered_method=True)
+
+
+class MarketPlanServiceServicer(object):
+    """===== Services =====
+    """
+
+    def CreateMarketPlan(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetMarketPlan(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListMarketPlans(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateMarketPlan(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteMarketPlan(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_MarketPlanServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'CreateMarketPlan': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateMarketPlan,
+                    request_deserializer=market__pb2.CreateMarketPlanRequest.FromString,
+                    response_serializer=market__pb2.MarketPlan.SerializeToString,
+            ),
+            'GetMarketPlan': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMarketPlan,
+                    request_deserializer=market__pb2.MarketPlanId.FromString,
+                    response_serializer=market__pb2.MarketPlan.SerializeToString,
+            ),
+            'ListMarketPlans': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListMarketPlans,
+                    request_deserializer=market__pb2.MarketId.FromString,
+                    response_serializer=market__pb2.MarketPlanList.SerializeToString,
+            ),
+            'UpdateMarketPlan': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateMarketPlan,
+                    request_deserializer=market__pb2.UpdateMarketPlanRequest.FromString,
+                    response_serializer=market__pb2.MarketPlan.SerializeToString,
+            ),
+            'DeleteMarketPlan': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteMarketPlan,
+                    request_deserializer=market__pb2.MarketPlanId.FromString,
+                    response_serializer=market__pb2.Empty.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'market.MarketPlanService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('market.MarketPlanService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class MarketPlanService(object):
+    """===== Services =====
+    """
+
+    @staticmethod
+    def CreateMarketPlan(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.MarketPlanService/CreateMarketPlan',
+            market__pb2.CreateMarketPlanRequest.SerializeToString,
+            market__pb2.MarketPlan.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetMarketPlan(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.MarketPlanService/GetMarketPlan',
+            market__pb2.MarketPlanId.SerializeToString,
+            market__pb2.MarketPlan.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListMarketPlans(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.MarketPlanService/ListMarketPlans',
+            market__pb2.MarketId.SerializeToString,
+            market__pb2.MarketPlanList.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdateMarketPlan(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.MarketPlanService/UpdateMarketPlan',
+            market__pb2.UpdateMarketPlanRequest.SerializeToString,
+            market__pb2.MarketPlan.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteMarketPlan(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.MarketPlanService/DeleteMarketPlan',
+            market__pb2.MarketPlanId.SerializeToString,
+            market__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+
+class LogServiceStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.CreateLog = channel.unary_unary(
+                '/market.LogService/CreateLog',
+                request_serializer=market__pb2.CreateLogRequest.SerializeToString,
+                response_deserializer=market__pb2.Log.FromString,
+                _registered_method=True)
+        self.GetLog = channel.unary_unary(
+                '/market.LogService/GetLog',
+                request_serializer=market__pb2.LogKey.SerializeToString,
+                response_deserializer=market__pb2.Log.FromString,
+                _registered_method=True)
+        self.ListLogs = channel.unary_unary(
+                '/market.LogService/ListLogs',
+                request_serializer=market__pb2.MarketId.SerializeToString,
+                response_deserializer=market__pb2.LogList.FromString,
+                _registered_method=True)
+        self.UpdateLog = channel.unary_unary(
+                '/market.LogService/UpdateLog',
+                request_serializer=market__pb2.UpdateLogRequest.SerializeToString,
+                response_deserializer=market__pb2.Log.FromString,
+                _registered_method=True)
+        self.DeleteLog = channel.unary_unary(
+                '/market.LogService/DeleteLog',
+                request_serializer=market__pb2.LogKey.SerializeToString,
+                response_deserializer=market__pb2.Empty.FromString,
+                _registered_method=True)
+
+
+class LogServiceServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def CreateLog(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetLog(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListLogs(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def UpdateLog(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def DeleteLog(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_LogServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'CreateLog': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateLog,
+                    request_deserializer=market__pb2.CreateLogRequest.FromString,
+                    response_serializer=market__pb2.Log.SerializeToString,
+            ),
+            'GetLog': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetLog,
+                    request_deserializer=market__pb2.LogKey.FromString,
+                    response_serializer=market__pb2.Log.SerializeToString,
+            ),
+            'ListLogs': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListLogs,
+                    request_deserializer=market__pb2.MarketId.FromString,
+                    response_serializer=market__pb2.LogList.SerializeToString,
+            ),
+            'UpdateLog': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateLog,
+                    request_deserializer=market__pb2.UpdateLogRequest.FromString,
+                    response_serializer=market__pb2.Log.SerializeToString,
+            ),
+            'DeleteLog': grpc.unary_unary_rpc_method_handler(
+                    servicer.DeleteLog,
+                    request_deserializer=market__pb2.LogKey.FromString,
+                    response_serializer=market__pb2.Empty.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'market.LogService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('market.LogService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class LogService(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def CreateLog(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.LogService/CreateLog',
+            market__pb2.CreateLogRequest.SerializeToString,
+            market__pb2.Log.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetLog(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.LogService/GetLog',
+            market__pb2.LogKey.SerializeToString,
+            market__pb2.Log.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ListLogs(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.LogService/ListLogs',
+            market__pb2.MarketId.SerializeToString,
+            market__pb2.LogList.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def UpdateLog(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.LogService/UpdateLog',
+            market__pb2.UpdateLogRequest.SerializeToString,
+            market__pb2.Log.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def DeleteLog(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/market.LogService/DeleteLog',
+            market__pb2.LogKey.SerializeToString,
             market__pb2.Empty.FromString,
             options,
             channel_credentials,

@@ -24,21 +24,51 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cmarket.proto\"5\n\x06Market\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0f\n\x07\x61\x64\x64ress\x18\x02 \x01(\t\x12\x0e\n\x06\x64\x65tail\x18\x03 \x01(\t\"\x16\n\x08MarketId\x12\n\n\x02id\x18\x01 \x01(\t\"&\n\nMarketList\x12\x18\n\x07markets\x18\x01 \x03(\x0b\x32\x07.Market\"\x07\n\x05\x45mpty2\xbc\x01\n\rMarketService\x12#\n\x0cGetAllMarket\x12\x06.Empty\x1a\x0b.MarketList\x12 \n\x0c\x43reateMarket\x12\x07.Market\x1a\x07.Market\x12\x1f\n\tGetMarket\x12\t.MarketId\x1a\x07.Market\x12 \n\x0cUpdateMarket\x12\x07.Market\x1a\x07.Market\x12!\n\x0c\x44\x65leteMarket\x12\t.MarketId\x1a\x06.Emptyb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cmarket.proto\x12\x06market\"%\n\nMarketPlan\x12\x17\n\x0fmarket_plan_key\x18\x01 \x01(\t\"Y\n\x03Log\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0c\n\x04size\x18\x02 \x01(\t\x12\r\n\x05price\x18\x03 \x01(\x01\x12\x0f\n\x07user_id\x18\x04 \x01(\t\x12\x16\n\x0ereservation_id\x18\x05 \x01(\t\"\xef\x01\n\x06Market\x12\n\n\x02id\x18\x01 \x01(\t\x12\x13\n\x0bmarket_name\x18\x02 \x01(\t\x12\x0f\n\x07\x61\x64\x64ress\x18\x03 \x01(\t\x12\x17\n\x0f\x63over_image_key\x18\x04 \x01(\t\x12,\n\x10market_plan_keys\x18\x05 \x03(\x0b\x32\x12.market.MarketPlan\x12\x19\n\x04logs\x18\x06 \x03(\x0b\x32\x0b.market.Log\x12\x0e\n\x06\x64\x65tail\x18\x07 \x01(\t\x12\x0c\n\x04rule\x18\x08 \x01(\t\x12\x0f\n\x07user_id\x18\t \x01(\t\x12\x12\n\nmarketType\x18\n \x01(\t\x12\x0e\n\x06isOpen\x18\x0b \x01(\x08\"\x16\n\x08MarketId\x12\n\n\x02id\x18\x01 \x01(\t\"-\n\nMarketList\x12\x1f\n\x07markets\x18\x01 \x03(\x0b\x32\x0e.market.Market\"\x07\n\x05\x45mpty\"\x19\n\x06UserId\x12\x0f\n\x07user_id\x18\x01 \x01(\t\"\x8b\x01\n\x14SearchMarketsRequest\x12\r\n\x05query\x18\x01 \x01(\t\x12\x13\n\x0bmarket_name\x18\x02 \x01(\t\x12\x0f\n\x07\x61\x64\x64ress\x18\x03 \x01(\t\x12\x0e\n\x06\x64\x65tail\x18\x04 \x01(\t\x12\x0f\n\x07user_id\x18\x05 \x01(\t\x12\r\n\x05limit\x18\x06 \x01(\x05\x12\x0e\n\x06offset\x18\x07 \x01(\x05\"l\n\x15SearchMarketsResponse\x12\x1f\n\x07markets\x18\x01 \x03(\x0b\x32\x0e.market.Market\x12\x13\n\x0btotal_count\x18\x02 \x01(\x05\x12\r\n\x05limit\x18\x03 \x01(\x05\x12\x0e\n\x06offset\x18\x04 \x01(\x05\"N\n\x17\x43reateMarketPlanRequest\x12\x11\n\tmarket_id\x18\x01 \x01(\t\x12 \n\x04plan\x18\x02 \x01(\x0b\x32\x12.market.MarketPlan\":\n\x0cMarketPlanId\x12\x11\n\tmarket_id\x18\x01 \x01(\t\x12\x17\n\x0fmarket_plan_key\x18\x02 \x01(\t\"N\n\x17UpdateMarketPlanRequest\x12\x11\n\tmarket_id\x18\x01 \x01(\t\x12\x0f\n\x07old_key\x18\x02 \x01(\t\x12\x0f\n\x07new_key\x18\x03 \x01(\t\"3\n\x0eMarketPlanList\x12!\n\x05plans\x18\x01 \x03(\x0b\x32\x12.market.MarketPlan\"?\n\x10\x43reateLogRequest\x12\x11\n\tmarket_id\x18\x01 \x01(\t\x12\x18\n\x03log\x18\x02 \x01(\x0b\x32\x0b.market.Log\"3\n\x06LogKey\x12\x11\n\tmarket_id\x18\x01 \x01(\t\x12\x16\n\x0ereservation_id\x18\x02 \x01(\t\"?\n\x10UpdateLogRequest\x12\x11\n\tmarket_id\x18\x01 \x01(\t\x12\x18\n\x03log\x18\x02 \x01(\x0b\x32\x0b.market.Log\"$\n\x07LogList\x12\x19\n\x04logs\x18\x01 \x03(\x0b\x32\x0b.market.Log2\x89\x03\n\rMarketService\x12\x31\n\x0cGetAllMarket\x12\r.market.Empty\x1a\x12.market.MarketList\x12.\n\x0c\x43reateMarket\x12\x0e.market.Market\x1a\x0e.market.Market\x12-\n\tGetMarket\x12\x10.market.MarketId\x1a\x0e.market.Market\x12\x37\n\x11GetMarketByUserID\x12\x0e.market.UserId\x1a\x12.market.MarketList\x12L\n\rSearchMarkets\x12\x1c.market.SearchMarketsRequest\x1a\x1d.market.SearchMarketsResponse\x12.\n\x0cUpdateMarket\x12\x0e.market.Market\x1a\x0e.market.Market\x12/\n\x0c\x44\x65leteMarket\x12\x10.market.MarketId\x1a\r.market.Empty2\xd6\x02\n\x11MarketPlanService\x12G\n\x10\x43reateMarketPlan\x12\x1f.market.CreateMarketPlanRequest\x1a\x12.market.MarketPlan\x12\x39\n\rGetMarketPlan\x12\x14.market.MarketPlanId\x1a\x12.market.MarketPlan\x12;\n\x0fListMarketPlans\x12\x10.market.MarketId\x1a\x16.market.MarketPlanList\x12G\n\x10UpdateMarketPlan\x12\x1f.market.UpdateMarketPlanRequest\x1a\x12.market.MarketPlan\x12\x37\n\x10\x44\x65leteMarketPlan\x12\x14.market.MarketPlanId\x1a\r.market.Empty2\xf6\x01\n\nLogService\x12\x32\n\tCreateLog\x12\x18.market.CreateLogRequest\x1a\x0b.market.Log\x12%\n\x06GetLog\x12\x0e.market.LogKey\x1a\x0b.market.Log\x12-\n\x08ListLogs\x12\x10.market.MarketId\x1a\x0f.market.LogList\x12\x32\n\tUpdateLog\x12\x18.market.UpdateLogRequest\x1a\x0b.market.Log\x12*\n\tDeleteLog\x12\x0e.market.LogKey\x1a\r.market.Emptyb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'market_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_MARKET']._serialized_start=16
-  _globals['_MARKET']._serialized_end=69
-  _globals['_MARKETID']._serialized_start=71
-  _globals['_MARKETID']._serialized_end=93
-  _globals['_MARKETLIST']._serialized_start=95
-  _globals['_MARKETLIST']._serialized_end=133
-  _globals['_EMPTY']._serialized_start=135
-  _globals['_EMPTY']._serialized_end=142
-  _globals['_MARKETSERVICE']._serialized_start=145
-  _globals['_MARKETSERVICE']._serialized_end=333
+  _globals['_MARKETPLAN']._serialized_start=24
+  _globals['_MARKETPLAN']._serialized_end=61
+  _globals['_LOG']._serialized_start=63
+  _globals['_LOG']._serialized_end=152
+  _globals['_MARKET']._serialized_start=155
+  _globals['_MARKET']._serialized_end=394
+  _globals['_MARKETID']._serialized_start=396
+  _globals['_MARKETID']._serialized_end=418
+  _globals['_MARKETLIST']._serialized_start=420
+  _globals['_MARKETLIST']._serialized_end=465
+  _globals['_EMPTY']._serialized_start=467
+  _globals['_EMPTY']._serialized_end=474
+  _globals['_USERID']._serialized_start=476
+  _globals['_USERID']._serialized_end=501
+  _globals['_SEARCHMARKETSREQUEST']._serialized_start=504
+  _globals['_SEARCHMARKETSREQUEST']._serialized_end=643
+  _globals['_SEARCHMARKETSRESPONSE']._serialized_start=645
+  _globals['_SEARCHMARKETSRESPONSE']._serialized_end=753
+  _globals['_CREATEMARKETPLANREQUEST']._serialized_start=755
+  _globals['_CREATEMARKETPLANREQUEST']._serialized_end=833
+  _globals['_MARKETPLANID']._serialized_start=835
+  _globals['_MARKETPLANID']._serialized_end=893
+  _globals['_UPDATEMARKETPLANREQUEST']._serialized_start=895
+  _globals['_UPDATEMARKETPLANREQUEST']._serialized_end=973
+  _globals['_MARKETPLANLIST']._serialized_start=975
+  _globals['_MARKETPLANLIST']._serialized_end=1026
+  _globals['_CREATELOGREQUEST']._serialized_start=1028
+  _globals['_CREATELOGREQUEST']._serialized_end=1091
+  _globals['_LOGKEY']._serialized_start=1093
+  _globals['_LOGKEY']._serialized_end=1144
+  _globals['_UPDATELOGREQUEST']._serialized_start=1146
+  _globals['_UPDATELOGREQUEST']._serialized_end=1209
+  _globals['_LOGLIST']._serialized_start=1211
+  _globals['_LOGLIST']._serialized_end=1247
+  _globals['_MARKETSERVICE']._serialized_start=1250
+  _globals['_MARKETSERVICE']._serialized_end=1643
+  _globals['_MARKETPLANSERVICE']._serialized_start=1646
+  _globals['_MARKETPLANSERVICE']._serialized_end=1988
+  _globals['_LOGSERVICE']._serialized_start=1991
+  _globals['_LOGSERVICE']._serialized_end=2237
 # @@protoc_insertion_point(module_scope)

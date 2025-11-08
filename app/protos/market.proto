@@ -1,12 +1,36 @@
 syntax = "proto3";
 
-// Message definitions
-message Market {
-  string id = 1;
-  string address = 2;
-  string detail = 3;
+package market;
+
+// ----- Value Objects -----
+message MarketPlan {
+  string market_plan_key = 1; // S3 image key
 }
 
+message Log {
+  string name =1;
+  string size = 2;            // e.g., "2x3", "M", "10sqm"
+  double price = 3;           // price for the size
+  string user_id = 4;          // vendor user ID (FK)
+  string reservation_id = 5;   // reservation ID (FK)
+}
+
+// ----- Aggregate Root -----
+message Market {
+  string id = 1;                              // PRIMARY KEY
+  string market_name = 2;                     // VARCHAR(200)
+  string address = 3;                         // VARCHAR(200)
+  string cover_image_key = 4;                 // S3 object key
+  repeated MarketPlan market_plan_keys = 5;   // embedded list
+  repeated Log logs = 6;                      // embedded list
+  string detail = 7;                          // VARCHAR(500)
+  string rule = 8;                            // VARCHAR(500)
+  string user_id = 9;                         // owner FK (VARCHAR(200))
+  string marketType = 10;
+  bool isOpen = 11;
+}
+
+// ----- Common wrappers -----
 message MarketId {
   string id = 1;
 }
@@ -17,11 +41,94 @@ message MarketList {
 
 message Empty {}
 
-// Service definition
+message UserId {
+  string user_id = 1;
+}
+
+message SearchMarketsRequest {
+  string query = 1;           // general search query
+  string market_name = 2;     // search by market name
+  string address = 3;         // search by address
+  string detail = 4;          // search by detail
+  string user_id = 5;         // filter by user_id
+  int32 limit = 6;            // limit results (default: 50)
+  int32 offset = 7;           // offset for pagination (default: 0)
+}
+
+message SearchMarketsResponse {
+  repeated Market markets = 1;
+  int32 total_count = 2;      // total number of results
+  int32 limit = 3;            // applied limit
+  int32 offset = 4;           // applied offset
+}
+
+// ----- Service definition -----
+// Keeping the same CRUD interface you already have.
 service MarketService {
   rpc GetAllMarket(Empty) returns (MarketList);
   rpc CreateMarket(Market) returns (Market);
   rpc GetMarket(MarketId) returns (Market);
+  rpc GetMarketByUserID(UserId) returns (MarketList);
+  rpc SearchMarkets(SearchMarketsRequest) returns (SearchMarketsResponse);
   rpc UpdateMarket(Market) returns (Market);
   rpc DeleteMarket(MarketId) returns (Empty);
+}
+
+
+// ===== MarketPlan requests/replies =====
+message CreateMarketPlanRequest {
+  string market_id = 1;
+  MarketPlan plan = 2;
+}
+
+message MarketPlanId {
+  string market_id = 1;
+  string market_plan_key = 2;
+}
+
+message UpdateMarketPlanRequest {
+  string market_id = 1;
+  string old_key = 2;
+  string new_key = 3;
+}
+
+message MarketPlanList {
+  repeated MarketPlan plans = 1;
+}
+
+// ===== Log requests/replies =====
+message CreateLogRequest {
+  string market_id = 1;
+  Log log = 2;
+}
+
+message LogKey {
+  string market_id = 1;
+  string reservation_id = 2; // treat reservation_id as unique within a market
+}
+
+message UpdateLogRequest {
+  string market_id = 1;
+  Log log = 2; // reservation_id required to identify target
+}
+
+message LogList {
+  repeated Log logs = 1;
+}
+
+// ===== Services =====
+service MarketPlanService {
+  rpc CreateMarketPlan(CreateMarketPlanRequest) returns (MarketPlan);
+  rpc GetMarketPlan(MarketPlanId) returns (MarketPlan);
+  rpc ListMarketPlans(MarketId) returns (MarketPlanList);
+  rpc UpdateMarketPlan(UpdateMarketPlanRequest) returns (MarketPlan);
+  rpc DeleteMarketPlan(MarketPlanId) returns (Empty);
+}
+
+service LogService {
+  rpc CreateLog(CreateLogRequest) returns (Log);
+  rpc GetLog(LogKey) returns (Log);
+  rpc ListLogs(MarketId) returns (LogList);
+  rpc UpdateLog(UpdateLogRequest) returns (Log);
+  rpc DeleteLog(LogKey) returns (Empty);
 }

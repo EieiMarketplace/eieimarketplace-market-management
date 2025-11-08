@@ -6,9 +6,22 @@ from contextlib import asynccontextmanager
 from db.mongo import connect_to_mongo, close_mongo_connection
 from routes import market
 from grpc_server import serve as serve_grpc
-import os
+from fastapi.middleware.cors import CORSMiddleware
+ 
 
 app = FastAPI(title="Eiei Marketplace Market Management")
+
+list = ["http://localhost:5000",
+        "http://localhost:8000",
+        "http://localhost:3000"
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],       
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH"],          
+    allow_headers=["*"],          
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,7 +31,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     close_mongo_connection()
 
-app.include_router(market.router, prefix="/markets", tags=["Markets"])
+app.include_router(market.router, prefix="/api/markets", tags=["Markets"])
 
 async def serve_fastapi():
     config = uvicorn.Config(app, host="0.0.0.0", port=7002)
